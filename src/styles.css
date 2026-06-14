@@ -718,4 +718,75 @@ body.locked .resize-border {
   pointer-events: none !important;
 }
 
+/* Light color scheme variable overrides to match Windows Light Theme */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-color-transparent: rgba(243, 243, 243, 0.75);
+    --bg-color-solid: #f3f3f3;
+    --border-color: rgba(0, 0, 0, 0.1);
+    --border-color-focus: rgba(0, 0, 0, 0.25);
+    --text-color: #1c1c1c;
+    --text-color-secondary: #5f5f5f;
+    --control-bg: rgba(255, 255, 255, 0.75);
+    --control-bg-hover: rgba(235, 235, 235, 0.85);
+    --control-bg-active: rgba(215, 215, 215, 0.95);
+  }
+}
+
+/* Persistent Lock Hint at bottom-right corner */
+.locked-hint {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background-color: var(--bg-color-transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 8px 14px;
+  border-radius: 8px;
+  display: none; /* Hidden by default */
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 99999;
+  pointer-events: none; /* Let clicks pass through since it is just a hint */
+  animation: fadeInUp 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+body.locked .locked-hint {
+  display: flex;
+}
+
+.locked-hint kbd {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--text-color);
+}
+
+@media (prefers-color-scheme: light) {
+  .locked-hint kbd {
+    background: rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 
