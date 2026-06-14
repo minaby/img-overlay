@@ -1,0 +1,12 @@
+[[permission]]
+identifier = "allow-overlay-commands"
+description = "Allows overlay application custom commands"
+
+[permission.commands]
+allow = [
+  "toggle_lock",
+  "set_click_through",
+  "close_app",
+  "minimize_app",
+  "toggle_maximize"
+]

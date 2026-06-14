@@ -1,0 +1,717 @@
+/* Custom Windows 11 Glassmorphism Theme */
+
+:root {
+  --accent-color: #0078d4;
+  --accent-color-hover: #1084d6;
+  --accent-color-active: #0066b3;
+  --danger-color: #e81123;
+  --danger-color-hover: #f1707a;
+  
+  --bg-color-transparent: rgba(32, 32, 32, 0.65);
+  --bg-color-solid: #202020;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color-focus: rgba(255, 255, 255, 0.25);
+  --text-color: #ffffff;
+  --text-color-secondary: #a0a0a0;
+  --control-bg: rgba(45, 45, 45, 0.7);
+  --control-bg-hover: rgba(55, 55, 55, 0.85);
+  --control-bg-active: rgba(35, 35, 35, 0.9);
+  
+  font-family: 'Outfit', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: 14px;
+  color: var(--text-color);
+  user-select: none;
+  overflow: hidden;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: transparent !important;
+  overflow: hidden;
+}
+
+/* Draggable background overlay when unlocked */
+#drag-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: auto; /* Clickable when active */
+}
+
+/* Main wrapper */
+#app-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+  z-index: 2;
+  pointer-events: none; /* Let clicks fall through to drag-overlay */
+}
+
+/* Canvas Area for Image rendering */
+#canvas-area {
+  flex-grow: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  z-index: 3;
+  pointer-events: none;
+}
+
+#image-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto; /* Allow image interaction */
+}
+
+#overlay-image {
+  max-width: none;
+  max-height: none;
+  transform: translate(var(--x, 0px), var(--y, 0px)) 
+             scale(var(--scale, 1)) 
+             rotate(var(--rotate, 0deg)) 
+             scaleX(var(--flip-x, 1)) 
+             scaleY(var(--flip-y, 1));
+  opacity: var(--opacity, 0.5);
+  filter: var(--filter, none);
+  cursor: grab;
+  transition: outline 0.15s;
+  pointer-events: auto;
+}
+
+#overlay-image:active {
+  cursor: grabbing;
+}
+
+/* Image outline when unlocked */
+body:not(.locked) #overlay-image.loaded {
+  outline: 2px dashed rgba(0, 120, 212, 0.5);
+  outline-offset: 4px;
+}
+
+/* Dropzone styling */
+#dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 40px;
+  background-color: rgba(30, 30, 30, 0.75);
+  backdrop-filter: blur(12px);
+  width: 320px;
+  text-align: center;
+  transition: all 0.2s ease;
+  pointer-events: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+#dropzone.dragover {
+  border-color: var(--accent-color);
+  background-color: rgba(0, 120, 212, 0.1);
+  transform: scale(1.02);
+}
+
+.dropzone-icon {
+  color: var(--accent-color);
+  margin-bottom: 16px;
+  transition: transform 0.2s ease;
+}
+
+#dropzone.dragover .dropzone-icon {
+  transform: translateY(-5px);
+}
+
+.dropzone-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.dropzone-subtitle {
+  font-size: 12px;
+  color: var(--text-color-secondary);
+  margin: 0 0 20px 0;
+}
+
+/* Control Panel */
+#control-panel {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  bottom: 20px;
+  width: 320px;
+  background-color: var(--bg-color-transparent);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+  pointer-events: auto; /* Interactive */
+  transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1), opacity 0.2s ease;
+  transform-origin: right center;
+}
+
+#control-panel.collapsed {
+  transform: scale(0.8) translateX(360px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Panel Header & Drag Region */
+.panel-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: move;
+}
+
+.title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drag-dots {
+  color: var(--text-color-secondary);
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.app-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.header-actions button {
+  background: transparent;
+  border: none;
+  color: var(--text-color-secondary);
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.header-actions button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-color);
+}
+
+#close-btn:hover {
+  background-color: var(--danger-color) !important;
+  color: white !important;
+}
+
+/* Panel Content Scrollable */
+.panel-content {
+  padding: 16px;
+  overflow-y: auto;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Custom Scrollbar */
+.panel-content::-webkit-scrollbar {
+  width: 4px;
+}
+.panel-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.panel-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+.panel-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Status Indicator */
+.status-indicator {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #107c41; /* Green */
+  box-shadow: 0 0 8px #107c41;
+  transition: all 0.2s ease;
+}
+
+body.locked .status-dot {
+  background-color: var(--danger-color);
+  box-shadow: 0 0 8px var(--danger-color);
+}
+
+.hotkey-tip {
+  font-size: 11px;
+  color: var(--text-color-secondary);
+}
+
+.hotkey-tip kbd {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 10px;
+  font-family: monospace;
+}
+
+/* Active Image Info */
+.image-meta {
+  background: rgba(0, 120, 212, 0.08);
+  border: 1px solid rgba(0, 120, 212, 0.15);
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#image-name {
+  font-size: 12px;
+  font-weight: 500;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #a3d5ff;
+}
+
+.meta-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+/* Control Groups */
+.control-group h2 {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 8px 0;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Windows 11 style Range Slider */
+.fluent-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  outline: none;
+  margin: 0;
+  cursor: pointer;
+}
+
+.fluent-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  border: 3px solid #202020;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.fluent-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  background: var(--accent-color-hover);
+}
+
+.fluent-slider::-webkit-slider-thumb:active {
+  transform: scale(0.9);
+  background: var(--accent-color-active);
+}
+
+/* Numerical Inputs alongside sliders */
+.numeric-input-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: var(--control-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 2px 6px;
+  width: 65px;
+  min-width: 65px;
+  transition: border-color 0.15s ease;
+}
+
+.numeric-input-wrapper:focus-within {
+  border-color: var(--accent-color);
+  background-color: var(--control-bg-hover);
+}
+
+.fluent-number {
+  background: transparent;
+  border: none;
+  color: white;
+  font-family: inherit;
+  font-size: 13px;
+  width: 100%;
+  text-align: right;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.fluent-number::-webkit-outer-spin-button,
+.fluent-number::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.unit {
+  font-size: 11px;
+  color: var(--text-color-secondary);
+  margin-left: 2px;
+}
+
+/* Button rows */
+.btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+button.toggle-btn {
+  flex: 1;
+  background-color: var(--control-bg);
+  border: 1px solid var(--border-color);
+  color: white;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+button.toggle-btn:hover {
+  background-color: var(--control-bg-hover);
+  border-color: var(--border-color-focus);
+}
+
+button.toggle-btn.active {
+  background-color: rgba(0, 120, 212, 0.2);
+  border-color: var(--accent-color);
+  color: #a3d5ff;
+}
+
+/* Icon Button */
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-color-secondary);
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.icon-btn:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--text-color);
+}
+
+.icon-btn.danger:hover {
+  background-color: rgba(232, 17, 35, 0.15);
+  color: #ff8c95;
+}
+
+/* Primary Button for Lock */
+.primary-btn {
+  background-color: var(--accent-color);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+}
+
+.primary-btn:hover {
+  background-color: var(--accent-color-hover);
+  transform: translateY(-1px);
+}
+
+.primary-btn:active {
+  background-color: var(--accent-color-active);
+  transform: translateY(0);
+}
+
+/* Secondary Button for browse */
+#browse-btn {
+  background-color: var(--accent-color);
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+  transition: background-color 0.15s;
+}
+
+#browse-btn:hover {
+  background-color: var(--accent-color-hover);
+}
+
+/* Nudge Controls UI */
+.nudge-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.nudge-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.nudge-row {
+  display: flex;
+  gap: 4px;
+}
+
+.nudge-btn {
+  width: 32px;
+  height: 32px;
+  background-color: var(--control-bg);
+  border: 1px solid var(--border-color);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: all 0.1s;
+}
+
+.nudge-btn:hover {
+  background-color: var(--control-bg-hover);
+}
+
+.nudge-btn:active {
+  background-color: var(--control-bg-active);
+  transform: scale(0.95);
+}
+
+.center-btn {
+  font-size: 14px;
+}
+
+.nudge-tip {
+  font-size: 10px;
+  color: var(--text-color-secondary);
+  margin: 4px 0 0 0;
+  text-align: center;
+}
+
+/* Minimized Floating Bubble */
+.floating-bubble {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--bg-color-transparent);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  z-index: 9;
+  pointer-events: auto;
+  transition: all 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+.floating-bubble:hover {
+  background-color: var(--control-bg-hover);
+  transform: scale(1.05);
+}
+
+.floating-bubble:active {
+  transform: scale(0.95);
+}
+
+/* Locked Overlay text banner */
+.locked-overlay {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(232, 17, 35, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 16px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  z-index: 100;
+  animation: fadeInDown 0.3s ease-out;
+}
+
+.lock-indicator-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Global Locked visual modifications */
+body.locked #drag-overlay {
+  pointer-events: none; /* Let clicks pass through background */
+}
+
+body.locked #overlay-image {
+  pointer-events: none; /* Let clicks pass through image */
+}
+
+body.locked #control-panel {
+  opacity: 0 !important;
+  transform: scale(0.9) translateY(-20px) !important;
+  pointer-events: none !important;
+}
+
+body.locked #expand-bubble {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body.locked #dropzone {
+  display: none !important; /* Hide dropzone if active when locked */
+}
+
+/* Custom Resize Handles */
+.resize-border {
+  position: absolute;
+  z-index: 9999;
+  pointer-events: auto;
+  background-color: transparent;
+  transition: background-color 0.2s;
+}
+
+/* Give hover feedback so handles are easy to identify */
+.resize-border:hover {
+  background-color: rgba(0, 120, 212, 0.25);
+}
+
+#resize-top {
+  top: 0; left: 8px; right: 8px; height: 8px; cursor: n-resize;
+}
+#resize-bottom {
+  bottom: 0; left: 8px; right: 8px; height: 8px; cursor: s-resize;
+}
+#resize-left {
+  left: 0; top: 8px; bottom: 8px; width: 8px; cursor: w-resize;
+}
+#resize-right {
+  right: 0; top: 8px; bottom: 8px; width: 8px; cursor: e-resize;
+}
+#resize-topleft {
+  top: 0; left: 0; width: 8px; height: 8px; cursor: nw-resize;
+}
+#resize-topright {
+  top: 0; right: 0; width: 8px; height: 8px; cursor: ne-resize;
+}
+#resize-bottomleft {
+  bottom: 0; left: 0; width: 8px; height: 8px; cursor: sw-resize;
+}
+#resize-bottomright {
+  bottom: 0; right: 0; width: 8px; height: 8px; cursor: se-resize;
+}
+
+/* Hide borders and disable pointer events when locked */
+body.locked .resize-border {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+

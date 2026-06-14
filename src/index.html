@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Overlay</title>
+    <!-- Import Outfit font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module" src="/main.js" defer></script>
+  </head>
+  <body>
+    <!-- Transparent window draggable background -->
+    <div id="drag-overlay" data-tauri-drag-region></div>
+
+    <div id="app-container">
+      <!-- Image Canvas Area -->
+      <div id="canvas-area">
+        <div id="image-wrapper">
+          <img id="overlay-image" style="display: none;" />
+          <div id="dropzone">
+            <svg class="dropzone-icon" viewBox="0 0 24 24" width="48" height="48">
+              <path fill="currentColor" d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+            </svg>
+            <p class="dropzone-title">Drag & Drop reference image</p>
+            <p class="dropzone-subtitle">Supports PNG, JPG, SVG, WebP</p>
+            <button id="browse-btn">Browse File</button>
+            <input type="file" id="file-input" accept="image/*" style="display: none;" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Control Panel -->
+      <div id="control-panel">
+        <div class="panel-header" data-tauri-drag-region>
+          <div class="title-group" data-tauri-drag-region>
+            <span class="drag-dots" data-tauri-drag-region>⋮⋮</span>
+            <h1 class="app-title" data-tauri-drag-region>Image Overlay</h1>
+          </div>
+          <div class="header-actions">
+            <button id="win-minimize-btn" title="Minimize Window">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M20 13H4v-2h16v2z"/></svg>
+            </button>
+            <button id="win-maximize-btn" title="Maximize/Restore Window">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M4 4h16v16H4V4zm2 2v12h12V6H6z"/></svg>
+            </button>
+            <button id="collapse-btn" title="Collapse Panel">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z"/></svg>
+            </button>
+            <button id="close-btn" title="Close App">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="panel-content">
+          <!-- Active Image Info -->
+          <div id="active-image-info" style="display: none;">
+            <div class="image-meta">
+              <span id="image-name">vinyl_template.png</span>
+              <div class="meta-buttons">
+                <button id="center-position-btn" class="icon-btn" title="Center Position">
+                  <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm10 3h-2.03c-.22-3.78-3.2-6.76-6.97-6.97V2h-2v2.03c-3.78.22-6.76 3.2-6.97 6.97H2v2h2.03c.22 3.78 3.2 6.76 6.97 6.97V22h-2v-2.03c3.78-.22 6.76-3.2 6.97-6.97H22v-2zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg>
+                </button>
+                <button id="reset-image-btn" class="icon-btn" title="Reset Transforms">
+                  <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                </button>
+                <button id="remove-image-btn" class="icon-btn danger" title="Remove Image">
+                  <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Adjustments Section -->
+          <div class="control-group">
+            <h2>Opacity</h2>
+            <div class="slider-row">
+              <input type="range" id="opacity-slider" min="10" max="100" value="50" class="fluent-slider" />
+              <div class="numeric-input-wrapper">
+                <input type="number" id="opacity-number" min="10" max="100" value="50" class="fluent-number" />
+                <span class="unit">%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <h2>Scale</h2>
+            <div class="slider-row">
+              <input type="range" id="scale-slider" min="10" max="500" value="100" class="fluent-slider" />
+              <div class="numeric-input-wrapper">
+                <input type="number" id="scale-number" min="10" max="500" value="100" class="fluent-number" />
+                <span class="unit">%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <h2>Rotation</h2>
+            <div class="slider-row">
+              <input type="range" id="rotate-slider" min="-90" max="90" value="0" class="fluent-slider" />
+              <div class="numeric-input-wrapper">
+                <input type="number" id="rotate-number" min="-90" max="90" value="0" class="fluent-number" />
+                <span class="unit">°</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Flips -->
+          <div class="control-group">
+            <h2>Flip</h2>
+            <div class="btn-row">
+              <button id="flip-h-btn" class="toggle-btn">
+                <svg viewBox="0 0 24 24" width="16" height="16" style="margin-right: 6px;"><path fill="currentColor" d="M11 3h2v18h-2z M9 9v6l-6-3z M15 9v6l6-3z"/></svg>
+                Horizontal
+              </button>
+              <button id="flip-v-btn" class="toggle-btn">
+                <svg viewBox="0 0 24 24" width="16" height="16" style="margin-right: 6px;"><path fill="currentColor" d="M3 11h18v2H3z M9 9h6l-3-6z M9 15h6l-3 6z"/></svg>
+                Vertical
+              </button>
+            </div>
+          </div>
+
+          <!-- Color Filters -->
+          <div class="control-group">
+            <h2>Filters</h2>
+            <div class="btn-row">
+              <button id="filter-invert-btn" class="toggle-btn">
+                <svg viewBox="0 0 24 24" width="16" height="16" style="margin-right: 6px;"><path fill="currentColor" d="M12 2A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14v12c3.31 0 6-2.69 6-6s-2.69-6-6-6z"/></svg>
+                Invert
+              </button>
+              <button id="filter-grayscale-btn" class="toggle-btn">
+                <svg viewBox="0 0 24 24" width="16" height="16" style="margin-right: 6px;"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93s3.05-7.44 7-7.93v15.86z"/></svg>
+                Grayscale
+              </button>
+            </div>
+          </div>
+
+          <!-- Lock Action -->
+          <button id="lock-btn" class="primary-btn" style="width: 100%;">
+            <svg viewBox="0 0 24 24" width="18" height="18" style="margin-right: 8px;"><path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+            Lock & Click-Through
+          </button>
+          <p class="hotkey-tip" style="text-align: center; margin-top: 8px;">
+            Press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>L</kbd> to toggle locking
+          </p>
+        </div>
+      </div>
+
+      <!-- Minimized Control Floating Bubble -->
+      <button id="expand-bubble" class="floating-bubble" title="Expand Control Panel">
+        <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      </button>
+
+      <!-- Locked overlay text -->
+      <div id="locked-overlay" class="locked-overlay" style="display: none;">
+        <div class="lock-indicator-inner">
+          <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          <span>Overlay Locked (Ctrl+Alt+L to Unlock)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Resize Borders -->
+    <div id="resize-top" class="resize-border"></div>
+    <div id="resize-bottom" class="resize-border"></div>
+    <div id="resize-left" class="resize-border"></div>
+    <div id="resize-right" class="resize-border"></div>
+    <div id="resize-topleft" class="resize-border"></div>
+    <div id="resize-topright" class="resize-border"></div>
+    <div id="resize-bottomleft" class="resize-border"></div>
+    <div id="resize-bottomright" class="resize-border"></div>
+  </body>
+</html>
