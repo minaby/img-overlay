@@ -41,7 +41,9 @@ let state = {
   dragStartY: 0,
   imageStartX: 0,
   imageStartY: 0,
-  hasImage: false
+  hasImage: false,
+  lockShortcut: "Ctrl+Alt+L",
+  hideShortcut: "Ctrl+Alt+H"
 };
 
 // DOM Elements
@@ -77,6 +79,8 @@ window.addEventListener("DOMContentLoaded", () => {
   setupEventListeners();
   setupTauriListeners();
   resetTransforms();
+  initShortcuts();
+  setupShortcutRecorder();
 });
 
 function initElements() {
@@ -422,6 +426,16 @@ function setupTauriListeners() {
       lockedOverlay.style.display = "none";
     }
   });
+
+  // Listen to dynamic shortcut updates from Rust config
+  safeListen("shortcuts-updated", (event) => {
+    const config = event.payload;
+    if (config) {
+      state.lockShortcut = config.lock;
+      state.hideShortcut = config.hide;
+      updateShortcutUI();
+    }
+  });
 }
 
 // Image Loader helper
@@ -526,4 +540,194 @@ function resetTransforms() {
 // Math Utility
 function clamp(val, min, max) {
   return Math.min(Math.max(val, min), max);
+}
+
+// Shortcuts Initialization and Dynamic UI
+async function initShortcuts() {
+  try {
+    const config = await safeInvoke("get_shortcuts");
+    if (config) {
+      state.lockShortcut = config.lock;
+      state.hideShortcut = config.hide;
+      updateShortcutUI();
+    }
+  } catch (err) {
+    console.error("Failed to load shortcuts:", err);
+  }
+}
+
+function updateShortcutUI() {
+  const lockInput = document.getElementById("lock-shortcut-input");
+  const hideInput = document.getElementById("hide-shortcut-input");
+  
+  if (lockInput) lockInput.value = state.lockShortcut;
+  if (hideInput) hideInput.value = state.hideShortcut;
+  
+  // Update lock button tip
+  const lockTip = document.getElementById("lock-btn-tip");
+  if (lockTip) {
+    lockTip.innerHTML = `Press <kbd>${state.lockShortcut.replace(/\+/g, "</kbd>+<kbd>")}</kbd> to toggle locking`;
+  }
+  
+  // Update locked hint at bottom right
+  const lockedHint = document.getElementById("locked-hint");
+  if (lockedHint) {
+    lockedHint.innerHTML = `
+      <div class="hint-row">
+        <svg viewBox="0 0 24 24" width="14" height="14" class="hint-icon" style="color: var(--accent-color);"><path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+        <span>Press <kbd>${state.lockShortcut.replace(/\+/g, "</kbd>+<kbd>")}</kbd> to unlock</span>
+      </div>
+      <div class="hint-row">
+        <svg viewBox="0 0 24 24" width="14" height="14" class="hint-icon" style="color: #107c41;"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+        <span>Press <kbd>${state.hideShortcut.replace(/\+/g, "</kbd>+<kbd>")}</kbd> to hide/show</span>
+      </div>
+    `;
+  }
+}
+
+let activeRecordingInput = null;
+
+function setupShortcutRecorder() {
+  const inputs = [
+    document.getElementById("lock-shortcut-input"),
+    document.getElementById("hide-shortcut-input")
+  ];
+  
+  inputs.forEach(input => {
+    if (!input) return;
+    
+    // Enter recording mode
+    input.addEventListener("click", () => {
+      input.focus();
+    });
+    
+    input.addEventListener("focus", () => {
+      activeRecordingInput = input;
+      input.parentElement.classList.add("recording");
+      input.value = "Press keys to record...";
+    });
+    
+    // Exit recording mode
+    input.addEventListener("blur", () => {
+      input.parentElement.classList.remove("recording");
+      activeRecordingInput = null;
+      // Restore state value if empty
+      if (input.id === "lock-shortcut-input") {
+        input.value = state.lockShortcut;
+      } else {
+        input.value = state.hideShortcut;
+      }
+    });
+  });
+  
+  // Clear buttons
+  const lockClear = document.getElementById("lock-shortcut-clear");
+  if (lockClear) {
+    lockClear.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const input = document.getElementById("lock-shortcut-input");
+      if (input) {
+        state.lockShortcut = "";
+        input.value = "";
+      }
+    });
+  }
+  
+  const hideClear = document.getElementById("hide-shortcut-clear");
+  if (hideClear) {
+    hideClear.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const input = document.getElementById("hide-shortcut-input");
+      if (input) {
+        state.hideShortcut = "";
+        input.value = "";
+      }
+    });
+  }
+  
+  // Save button
+  const saveBtn = document.getElementById("save-shortcuts-btn");
+  const statusMsg = document.getElementById("shortcut-status-msg");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", async () => {
+      const lockVal = document.getElementById("lock-shortcut-input").value.trim();
+      const hideVal = document.getElementById("hide-shortcut-input").value.trim();
+      
+      if (!lockVal || !hideVal) {
+        showStatus("Lock and Hide shortcuts cannot be empty!", false);
+        return;
+      }
+      
+      try {
+        await safeInvoke("save_shortcuts", { lock: lockVal, hide: hideVal });
+        state.lockShortcut = lockVal;
+        state.hideShortcut = hideVal;
+        updateShortcutUI();
+        showStatus("Shortcuts saved successfully!", true);
+      } catch (err) {
+        showStatus("Error: " + err, false);
+      }
+    });
+  }
+  
+  function showStatus(text, isSuccess) {
+    if (!statusMsg) return;
+    statusMsg.textContent = text;
+    statusMsg.className = "shortcut-status-msg " + (isSuccess ? "success" : "error");
+    statusMsg.style.display = "block";
+    setTimeout(() => {
+      statusMsg.style.display = "none";
+    }, 4000);
+  }
+  
+  // Key capturing
+  window.addEventListener("keydown", (e) => {
+    if (!activeRecordingInput) return;
+    
+    // Prevent default browser shortcuts while recording
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (e.key === "Escape") {
+      activeRecordingInput.blur();
+      return;
+    }
+    
+    let parts = [];
+    if (e.ctrlKey) parts.push("Ctrl");
+    if (e.altKey) parts.push("Alt");
+    if (e.shiftKey) parts.push("Shift");
+    if (e.metaKey) parts.push("Command");
+    
+    let key = e.key;
+    
+    // If it's just modifier keypress, show the current modifier combination
+    if (["Control", "Alt", "Shift", "Meta"].includes(key)) {
+      if (parts.length > 0) {
+        activeRecordingInput.value = parts.join("+") + "+...";
+      }
+      return;
+    }
+    
+    // Format primary key
+    if (key === " ") {
+      key = "Space";
+    } else if (key.length === 1) {
+      key = key.toUpperCase();
+    } else if (key.startsWith("Arrow")) {
+      key = key.substring(5);
+    }
+    
+    parts.push(key);
+    const combination = parts.join("+");
+    activeRecordingInput.value = combination;
+    
+    if (activeRecordingInput.id === "lock-shortcut-input") {
+      state.lockShortcut = combination;
+    } else {
+      state.hideShortcut = combination;
+    }
+    
+    activeRecordingInput.blur();
+  }, true);
 }

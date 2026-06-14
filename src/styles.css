@@ -796,4 +796,111 @@ body.locked .locked-hint {
   }
 }
 
+/* Shortcuts Settings Styling */
+.shortcut-config-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.shortcut-label {
+  font-size: 12px;
+  color: var(--text-color-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.shortcut-input-container {
+  display: flex;
+  align-items: center;
+  background-color: var(--control-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0 6px;
+  width: 170px;
+  height: 32px;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.shortcut-input-container:focus-within {
+  border-color: var(--accent-color);
+  background-color: var(--control-bg-hover);
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.25);
+}
+
+.shortcut-input-container.recording {
+  border-color: var(--danger-color) !important;
+  background-color: rgba(232, 17, 35, 0.1) !important;
+  box-shadow: 0 0 0 2px rgba(232, 17, 35, 0.25) !important;
+}
+
+.shortcut-input-field {
+  background: transparent;
+  border: none;
+  color: white;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+@media (prefers-color-scheme: light) {
+  .shortcut-input-field {
+    color: #1c1c1c;
+  }
+}
+
+.shortcut-clear-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-color-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  transition: all 0.15s;
+}
+
+.shortcut-clear-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-color);
+}
+
+@media (prefers-color-scheme: light) {
+  .shortcut-clear-btn:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+  }
+}
+
+.shortcut-status-msg {
+  font-size: 11px;
+  text-align: center;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+
+.shortcut-status-msg.success {
+  background-color: rgba(16, 124, 65, 0.15);
+  color: #a2f1c6;
+  border: 1px solid rgba(16, 124, 65, 0.25);
+}
+
+.shortcut-status-msg.error {
+  background-color: rgba(232, 17, 35, 0.15);
+  color: #ffb3b8;
+  border: 1px solid rgba(232, 17, 35, 0.25);
+}
+
 
