@@ -83,6 +83,21 @@ pub fn run() {
                                 let _ = window.set_ignore_cursor_events(next);
                                 let _ = window.emit("lock-toggled", next);
                             }
+                        } else if shortcut.matches(
+                            tauri_plugin_global_shortcut::Modifiers::CONTROL
+                                | tauri_plugin_global_shortcut::Modifiers::ALT,
+                            tauri_plugin_global_shortcut::Code::KeyH,
+                        ) {
+                            if let Some(window) = app.get_webview_window("main") {
+                                if let Ok(visible) = window.is_visible() {
+                                    if visible {
+                                        let _ = window.hide();
+                                    } else {
+                                        let _ = window.show();
+                                        let _ = window.set_focus();
+                                    }
+                                }
+                            }
                         }
                     }
                 })
@@ -97,14 +112,22 @@ pub fn run() {
             #[cfg(desktop)]
             {
                 use tauri_plugin_global_shortcut::GlobalShortcutExt;
-                let shortcut = tauri_plugin_global_shortcut::Shortcut::new(
+                let shortcut_l = tauri_plugin_global_shortcut::Shortcut::new(
                     Some(
                         tauri_plugin_global_shortcut::Modifiers::CONTROL
                             | tauri_plugin_global_shortcut::Modifiers::ALT,
                     ),
                     tauri_plugin_global_shortcut::Code::KeyL,
                 );
-                app.global_shortcut().register(shortcut)?;
+                let shortcut_h = tauri_plugin_global_shortcut::Shortcut::new(
+                    Some(
+                        tauri_plugin_global_shortcut::Modifiers::CONTROL
+                            | tauri_plugin_global_shortcut::Modifiers::ALT,
+                    ),
+                    tauri_plugin_global_shortcut::Code::KeyH,
+                );
+                app.global_shortcut().register(shortcut_l)?;
+                app.global_shortcut().register(shortcut_h)?;
             }
             Ok(())
         })

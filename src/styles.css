@@ -743,11 +743,12 @@ body.locked .resize-border {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-color);
   color: var(--text-color);
-  padding: 8px 14px;
+  padding: 10px 14px;
   border-radius: 8px;
   display: none; /* Hidden by default */
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
   font-size: 12px;
   font-weight: 500;
@@ -755,6 +756,12 @@ body.locked .resize-border {
   pointer-events: none; /* Let clicks pass through since it is just a hint */
   animation: fadeInUp 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
   transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.hint-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 body.locked .locked-hint {
