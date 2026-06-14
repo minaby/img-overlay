@@ -8,5 +8,7 @@ allow = [
   "set_click_through",
   "close_app",
   "minimize_app",
-  "toggle_maximize"
+  "toggle_maximize",
+  "get_shortcuts",
+  "save_shortcuts"
 ]

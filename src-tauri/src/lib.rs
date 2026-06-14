@@ -16,8 +16,8 @@ struct ShortcutsConfig {
 impl Default for ShortcutsConfig {
     fn default() -> Self {
         Self {
-            lock: "Ctrl+Alt+L".to_string(),
-            hide: "Ctrl+Alt+H".to_string(),
+            lock: "F8".to_string(),
+            hide: "F7".to_string(),
         }
     }
 }
@@ -40,7 +40,20 @@ fn load_config(app: &AppHandle) -> ShortcutsConfig {
     if let Some(path) = get_config_path(app) {
         if path.exists() {
             if let Ok(content) = fs::read_to_string(path) {
-                if let Ok(config) = serde_json::from_str::<ShortcutsConfig>(&content) {
+                if let Ok(mut config) = serde_json::from_str::<ShortcutsConfig>(&content) {
+                    // Migrate old defaults to F8 and F7
+                    let mut migrated = false;
+                    if config.lock == "Ctrl+Alt+L" {
+                        config.lock = "F8".to_string();
+                        migrated = true;
+                    }
+                    if config.hide == "Ctrl+Alt+H" {
+                        config.hide = "F7".to_string();
+                        migrated = true;
+                    }
+                    if migrated {
+                        let _ = save_config(app, &config);
+                    }
                     return config;
                 }
             }
